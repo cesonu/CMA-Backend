@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const Contact = require("../models/Contact");
+const mongoose = require("mongoose");
+
 
 // GET all contacts
 router.get("/", async (req, res) => {
@@ -53,19 +55,29 @@ router.post("/", async (req, res) => {
 
 // DELETE a contact by ID
 router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
+  console.log("Received ID:", id);
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    console.log("Invalid ObjectId format");
+    return res.status(400).json({ msg: "Invalid ID format" });
+  }
+
   try {
-    const contact = await Contact.findByIdAndRemove(req.params.id);  // Find and remove the contact by ID
-    
+    const contact = await Contact.findByIdAndDelete(id);
+
     if (!contact) {
-      return res.status(404).json({ msg: "Contact not found" });  // If contact doesn't exist
+      return res.status(404).json({ msg: "Contact not found" });
     }
-    
-    res.json({ msg: "Contact removed" });  // Successfully deleted
+
+    res.json({ msg: "Contact removed" });
   } catch (err) {
-    console.error(err.message);
-    res.status(400).send("Error deleting contact");
+    console.error("Error deleting contact:", err);
+    res.status(500).send("Error deleting contact");
   }
 });
+
+
 
 // PUT (Edit) a contact by ID
 router.put("/:id", async (req, res) => {
